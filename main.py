@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                              QHBoxLayout, QPushButton, QTextEdit, QLabel, 
-                             QDialog, QFormLayout, QLineEdit, QMessageBox)
+                             QDialog, QFormLayout, QLineEdit, QMessageBox, QComboBox)
 from PySide6.QtCore import Qt
 
 import database
@@ -27,7 +27,6 @@ class CheckAnswerModal(QDialog):
         
         for account, line_edit in self.inputs.items():
             line_edit.setPlaceholderText("0.00")
-            # Set a fixed height for easier typing visibility
             line_edit.setFixedHeight(28) 
             form_layout.addRow(QLabel(f"{account}:"), line_edit)
             
@@ -56,17 +55,31 @@ class BalancingActApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("BalancingAct - QuickBooks Practice Engine")
-        self.resize(650, 480)
+        self.resize(700, 550) # Bumped size up slightly to accommodate longer lists
         
         database.init_db()
         
         main_widget = QWidget()
         layout = QVBoxLayout()
         
+        # Difficulty Selector Top Bar
+        top_bar_layout = QHBoxLayout()
+        difficulty_label = QLabel("Select Difficulty Mode:")
+        difficulty_label.setStyleSheet("font-size: 13px; font-weight: bold;")
+        
+        self.difficulty_dropdown = QComboBox()
+        self.difficulty_dropdown.addItems(["Easy", "Medium", "Hard", "Hardest"])
+        self.difficulty_dropdown.setFixedHeight(30)
+        self.difficulty_dropdown.setMinimumWidth(120)
+        
+        top_bar_layout.addWidget(difficulty_label)
+        top_bar_layout.addWidget(self.difficulty_dropdown)
+        top_bar_layout.addStretch() # Pushes everything to the left
+        layout.addLayout(top_bar_layout)
+        
         # Header / Instructions
-        self.header_label = QLabel("Click 'New Demo' to generate QuickBooks practice transactions.")
-        # Using class-based layout scaling instead of hardcoded colors
-        self.header_label.setStyleSheet("font-size: 14px; font-weight: bold; padding: 4px;")
+        self.header_label = QLabel("Choose a level above and click 'New Demo' to generate practice transactions.")
+        self.header_label.setStyleSheet("font-size: 13px; font-weight: bold; padding: 4px; margin-top: 5px;")
         self.header_label.setWordWrap(True)
         layout.addWidget(self.header_label)
         
@@ -74,7 +87,6 @@ class BalancingActApp(QMainWindow):
         self.prompt_display = QTextEdit()
         self.prompt_display.setReadOnly(True)
         self.prompt_display.setPlaceholderText("Your business scenario prompts will appear here...")
-        # Keeps monospace font but drops hardcoded light background colors
         self.prompt_display.setStyleSheet("font-family: 'Consolas', 'Monaco', monospace; font-size: 14px; padding: 8px;")
         layout.addWidget(self.prompt_display)
         
@@ -96,11 +108,14 @@ class BalancingActApp(QMainWindow):
         self.setCentralWidget(main_widget)
 
     def handle_new_demo(self):
-        prompts = generate_new_demo()
+        # Read the currently active selection from our dropdown box
+        selected_difficulty = self.difficulty_dropdown.currentText()
+        
+        prompts = generate_new_demo(selected_difficulty)
         formatted_text = "\n\n".join([f"• {p}" for p in prompts])
         self.prompt_display.setText(formatted_text)
         
-        self.header_label.setText("Log the following transactions into QuickBooks, determine final balances, then click Check Answer:")
+        self.header_label.setText(f"[{selected_difficulty} Mode] Log these into QuickBooks, track ending balances, then check your answers:")
         self.check_btn.setEnabled(True)
 
     def handle_check_answer(self):
@@ -133,7 +148,6 @@ class BalancingActApp(QMainWindow):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     
-    # Global explicit theme injection so dark system setups render clean stark contrast
     app.setStyleSheet("""
         QMainWindow, QDialog {
             background-color: #1e1e24;
@@ -141,6 +155,18 @@ if __name__ == "__main__":
         }
         QLabel {
             color: #f5f5f7;
+        }
+        QComboBox {
+            background-color: #2a2a32;
+            color: #ffffff;
+            border: 1px solid #4a4a56;
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+        QComboBox QAbstractItemView {
+            background-color: #2a2a32;
+            color: #ffffff;
+            selection-background-color: #007acc;
         }
         QTextEdit {
             background-color: #121214;

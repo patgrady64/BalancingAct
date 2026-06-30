@@ -1,0 +1,12 @@
+# Virtual environment
+venv/
+
+# Python compiled bytecode / cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local SQLite databases (your practice data)
+*.db
+*.sqlite3
